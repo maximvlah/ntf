@@ -207,7 +207,7 @@ def process_files(files: List[str]):
 
             except Exception as e:
                 error_message = f"Error in file: {e}"
-                print(error_message, data)
+                # print(error_message, data)
 
 
     excel_path = csv_path.replace(".csv", ".xlsx")
