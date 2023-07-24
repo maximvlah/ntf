@@ -22,9 +22,34 @@ import os
 import csv
 
 
-# FIELDS = ["filename", "company", "date", "vendor", "date", "net_amount", "gross_amount", "tax_amount", "ean", "description", "article_id", "quantity", "unit_of_measure", "unit_price", "tax_rate", "total_price"]
+FIELDS = ["filename", 
+          "company", 
+          "date", 
+          "vendor_vat_id",  
+          "vendor", 
+          "pos_id",
+          "article_id", 
+          "ean",
+          "description", 
+          "quantity",
+          "unit_price", 
+          "discount", 
+          "additional_cost", 
+          "tax_rate", 
+          "tax_code",
+          "total_price", 
+          "gross_amount", 
+          "discount_amount", 
 
-FIELDS = ["filename", "receipt_number", "company", "vendor", "date", "net_amount", "gross_amount", "tax_amount", "ean", "description", "article_id", "quantity", "unit_of_measure", "unit_price", "tax_rate", "total_price"]
+          #extra
+          "company_vat_id",
+          "receipt_number", 
+          "net_amount", 
+          "tax_amount", 
+          "unit_of_measure", 
+          ]
+
+# FIELDS = ["filename", "receipt_number", "company", "vendor", "date", "net_amount", "gross_amount", "tax_amount", "ean", "description", "article_id", "quantity", "unit_of_measure", "unit_price", "tax_rate", "total_price"]
 
 excel_map = {}
 
@@ -59,10 +84,17 @@ def _convert_natif_to_structured(data:dict):
     ## Company Name
     company = data["customer"].get("name",None)
     company = _extract_from_dict(company)
+    company_vat_id = data["customer"].get("vat_id")
 
     ## Vendor Name
     vendor = data["vendor"].get("name",None)
     vendor = _extract_from_dict(vendor)
+
+    vendor_vat_id = data["vendor"].get("vat_id")
+    vendor_vat_id = _extract_from_dict(vendor_vat_id)
+
+    discount_amount = data.get("discount_amount")
+
 
     ## Date
     date = data.get("date",None)
@@ -100,7 +132,11 @@ def _convert_natif_to_structured(data:dict):
                 "unit_of_measure",
                 "unit_price",
                 "tax_rate",
-                "total_price"
+                "total_price",
+                "discount",
+                "pos_id",
+                "additional_cost",
+                "tax_code",
             ]:
                 clean_item[col] = _extract_from_dict(item.get(col))
 
@@ -115,11 +151,14 @@ def _convert_natif_to_structured(data:dict):
         general=dict(
             receipt_number=receipt_number,
             company=company,
+            company_vat_id=company_vat_id,
             vendor=vendor,
+            vendor_vat_id=vendor_vat_id,
             date=date,
             net_amount=net_amount,
             gross_amount=gross_amount,
             tax_amount=tax_amount,
+            discount_amount=discount_amount,
         ),
         items=clean_items
     )
@@ -187,7 +226,10 @@ def process_file(file_path: str):
         data = json.load(file)
     try:
         data = flatten_receipt_data(convert_parsed_results_to_structured_format(data, "natif"))
+
         data = [{**{"filename": Path(file_path).name}, **item} for item in data]
+        # with open("fields.json", "w") as f:
+        #     json.dump(list(data[0].keys()), f)
     except Exception as e:
         print(f"Error in file {file_path}: {e}")
         data = [{**{"filename": Path(file_path).name},**{field:"PARSER FAILED" for field in FIELDS}}]
