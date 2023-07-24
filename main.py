@@ -192,7 +192,7 @@ def process_files(files: List[str]):
 
         total_files = len(files)
 
-        futures = [executor.submit(process_file, file) for file in files[:100]]
+        futures = [executor.submit(process_file, file) for file in files]
 
         for i, future in tqdm(
                 enumerate(concurrent.futures.as_completed(futures)),
